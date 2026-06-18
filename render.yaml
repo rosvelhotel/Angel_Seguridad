@@ -1,12 +1,10 @@
-# render.yaml - Configuración de despliegue en Render
-
 services:
   # Servicio 1: Agente Ángel Guardian (Python)
   - type: worker
     name: angel-guardian-agent
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: python angel_guardian.py --daemon 30
+    startCommand: python angel_centinela.py --daemon 30
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
@@ -18,7 +16,6 @@ services:
         sync: false
       - key: MODELO_IA
         value: angel_guardian_mistral
-    healthCheckPath: /health
 
   # Servicio 2: Dashboard (Rust)
   - type: web
@@ -29,4 +26,3 @@ services:
     envVars:
       - key: RUST_LOG
         value: info
-    healthCheckPath: /
