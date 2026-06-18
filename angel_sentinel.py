@@ -55,6 +55,8 @@ class AngelGuardianReal:
 ║   🤖 IA ENGINE: {self.modelo_ia:<32}     ║
 ║   🛡️  Aislamiento Capa 3 -> Análisis Criptográfico -> Reporte   ║
 ║   🔐 Credenciales: Cargadas desde .env                          ║
+║   🌐 MikroTik IP: {self.mikrotik_ip}                            ║
+║   🔌 Puerto API: 80 (a través de Cloudflare Tunnel)             ║
 ╚══════════════════════════════════════════════════════════════════╝
         """)
     
@@ -64,10 +66,10 @@ class AngelGuardianReal:
                 host=self.mikrotik_ip,
                 username=self.mikrotik_user,
                 password=self.mikrotik_pass,
-                port=8728,
+                port=80,  # ⬅️ CAMBIADO DE 8728 A 80 PARA CLOUDFLARE TUNNEL
                 timeout=10
             )
-            print(f"✅ [FORTIFICADO] Canal API seguro establecido con {self.mikrotik_ip}")
+            print(f"✅ [FORTIFICADO] Canal API seguro establecido con {self.mikrotik_ip} (puerto 80)")
             return True
         except Exception as e:
             print(f"❌ [CRÍTICO] Error de handshake API con MikroTik: {e}")
