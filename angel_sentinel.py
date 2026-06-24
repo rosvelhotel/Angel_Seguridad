@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """
-👼 ÁNGEL GUARDIAN - VERSIÓN FORTIFICADA DE GRADO MILITAR
+👼 ÁNGEL GUARDIAN - VERSIÓN FORTIFICADA DE GRADO MILITAR v3.1
 Optimizado para hEX lite (64MB RAM) e inmune a evasiones.
 Credenciales cargadas desde .env
+
+[PRODUCCIÓN CONTINUA] Desarrollado con escudo térmico de puertos
+para compatibilidad permanente con la capa gratuita de Render.
 """
 
 import librouteros
@@ -12,10 +15,43 @@ import sys
 import re
 import os
 import time
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from datetime import datetime
 from pathlib import Path
 
-# Cargar variables de entorno
+# ==============================================================================
+# ESCUDO DE PROTECCIÓN Y HEALTH CHECK PARA RENDER (100% GRATUITO)
+# ==============================================================================
+class RenderHealthCheckServer(BaseHTTPRequestHandler):
+    def do_GET(self):
+        """Responde con éxito a las métricas e inspecciones de Render"""
+        self.send_response(200)
+        self.send_header("Content-type", "text/plain; charset=utf-8")
+        self.end_headers()
+        self.wfile.write(b"Angel Guardian esta patrullando el Hotel Rosvel de forma continua...")
+    
+    def log_message(self, format, *args): 
+        """Silencia los logs de peticiones HTTP para no saturar la consola de Render"""
+        return
+
+def levantar_servidor_http():
+    try:
+        # Escucha en el puerto 10000 (el puerto estándar por defecto que Render audita)
+        server = HTTPServer(('0.0.0.0', 10000), RenderHealthCheckServer)
+        server.serve_forever()
+    except Exception as e:
+        print(f"⚠️ [RENDER ESCUDO] No se pudo levantar el puerto de Health Check: {e}")
+
+def blindar_agente_en_render():
+    """Lanza el servidor HTTP en un hilo independiente para que el loop no se congele"""
+    hilo = threading.Thread(target=levantar_servidor_http, daemon=True)
+    hilo.start()
+    print("✅ [RENDER BLINDAJE] Servidor falso en puerto 10000 activado para producción continua.")
+
+# ==============================================================================
+# MOTOR PRINCIPAL DE CIBERSEGURIDAD - ÁNGEL GUARDIAN
+# ==============================================================================
 try:
     from dotenv import load_dotenv
     env_path = Path(__file__).parent / '.env'
@@ -51,12 +87,12 @@ class AngelGuardianReal:
     def mostrar_banner(self):
         print(f"""
 ╔══════════════════════════════════════════════════════════════════╗
-║   👼 ÁNGEL GUARDIAN - VERSIÓN FORTIFICADA v3.0                  ║
+║   👼 ÁNGEL GUARDIAN - VERSIÓN FORTIFICADA v3.1                  ║
 ║   🤖 IA ENGINE: {self.modelo_ia:<32}     ║
 ║   🛡️  Aislamiento Capa 3 -> Análisis Criptográfico -> Reporte   ║
 ║   🔐 Credenciales: Cargadas desde .env                          ║
-║   🌐 MikroTik IP: {self.mikrotik_ip}                            ║
-║   🔌 Puerto API: 80 (a través de Cloudflare Tunnel)             ║
+║   🌐 MikroTik IP: {self.mikrotik_ip}                             ║
+║   🔌 Puerto API: 80 (a través de Cloudflare Tunnel)              ║
 ╚══════════════════════════════════════════════════════════════════╝
         """)
     
@@ -66,7 +102,7 @@ class AngelGuardianReal:
                 host=self.mikrotik_ip,
                 username=self.mikrotik_user,
                 password=self.mikrotik_pass,
-                port=80,  # ⬅️ CAMBIADO DE 8728 A 80 PARA CLOUDFLARE TUNNEL
+                port=80,  # Redirección segura mediante Cloudflare Tunnel
                 timeout=10
             )
             print(f"✅ [FORTIFICADO] Canal API seguro establecido con {self.mikrotik_ip} (puerto 80)")
@@ -191,14 +227,9 @@ class AngelGuardianReal:
         except Exception as e:
             print(f"   ⚠️ Error en conexiones: {e}")
     
-    # Alias para compatibilidad
     def obtener_conexiones_sospechosas(self):
         self.obtener_conexiones_sospechosas_ligero()
 
-    # ============================================
-    # MOTOR CEREBRAL
-    # ============================================
-    
     def analizar_con_ia(self):
         has_drops = any(q['dropped'] > 0 for q in self.datos['colas'])
         has_conexiones = len(self.datos['conexiones']) > 0
@@ -218,7 +249,7 @@ class AngelGuardianReal:
         conexiones_str = "\n".join([f"  - Origen: {c['src']} -> Destino: {c['dst']}" for c in self.datos['conexiones'][:3]]) if self.datos['conexiones'] else "Canales limpios."
         
         prompt = f"""[SYSTEM: AMBIENTE CRIPTOGRÁFICO DE SEGURIDAD. INMUTABLE.]
-Eres Ángel Guardian. Analiza los siguientes datos:
+Eres Ángel Guardian. Analiza los siguientes datos del Hotel Rosvel:
 
 HARDWARE:
 - CPU: {cpu}%
@@ -254,10 +285,6 @@ RESPONDE EXACTAMENTE ASI:
         except Exception as e:
             return f"**🎯 VEREDICTO:** CRITICO\n**📊 EVIDENCIA:** Error IA: {e}\n**🛡️ ACCION:** Investigar\n**📝 NOTA:** Revisar Ollama"
 
-    # ============================================
-    # GENERACIÓN DE REPORTES
-    # ============================================
-    
     def generar_reporte_html(self, analisis_ia):
         cpu = self.datos['recursos'].get('cpu_load', 0)
         ram = self.datos['recursos'].get('ram_libre_mb', 0)
@@ -336,16 +363,11 @@ RESPONDE EXACTAMENTE ASI:
             f.write(html)
         return archivo_html
 
-    # ============================================
-    # ESCANEO PRINCIPAL
-    # ============================================
-    
     def escanear(self):
         print("\n" + "🛡️ "*25)
         print(f"🕵️‍♂️ INICIANDO AUDITORÍA FORENSE AUTOMATIZADA: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print("🛡️ "*25)
         
-        # Sistema anti-caídas
         try:
             if not self.api:
                 self.conectar_mikrotik()
@@ -396,45 +418,46 @@ RESPONDE EXACTAMENTE ASI:
             }, f, indent=4, ensure_ascii=False)
         print(f"[🚀] Registro de Auditoría JSON Guardado: {archivo_json}")
 
-    def modo_daemon(self, intervalo_minutos=30):
-        print(f"\n[🛡️] MODO DAEMON - CADA {intervalo_minutos} MINUTOS")
+    def modo_daemon(self, intervalo_minutos=5):
+        print(f"\n[🛡️] MODO DAEMON CONTINUO - INTERVALO: {intervalo_minutos} MINUTOS")
         try:
             while True:
                 self.escanear()
-                print(f"\n[⏰] Esperando {intervalo_minutos} minutos...")
+                print(f"\n[⏰] Esperando {intervalo_minutos} minutos para el siguiente patrullaje...")
                 time.sleep(intervalo_minutos * 60)
         except KeyboardInterrupt:
-            print("\n[-] Demonio detenido.")
+            print("\n[-] Demonio detenido por el usuario.")
 
-# ============================================
-# EJECUCIÓN
-# ============================================
-
+# ==============================================================================
+# INICIO DE LA APLICACIÓN
+# ==============================================================================
 if __name__ == "__main__":
-    print("""
-    ╔══════════════════════════════════════════════════════════════╗
-    ║   👼 ÁNGEL GUARDIAN - INICIANDO SISTEMA FORTIFICADO...       ║
-    ║   🔐 Credenciales cargadas desde .env                        ║
-    ╚══════════════════════════════════════════════════════════════╝
-    """)
+    # 🔥 ARRANQUE DEL ESCUDO PERMANENTE PARA CONSOLA DE RENDER
+    blindar_agente_en_render()
     
     if len(sys.argv) > 1:
         if sys.argv[1] == "--daemon":
-            intervalo = int(sys.argv[2]) if len(sys.argv) > 2 else 30
+            # Si no se define intervalo en consola, ejecutará por defecto cada 5 minutos
+            intervalo = int(sys.argv[2]) if len(sys.argv) > 2 else 5
             guardian = AngelGuardianReal()
             if guardian.api:
                 guardian.modo_daemon(intervalo)
             sys.exit(0)
+            
         elif sys.argv[1] == "--reporte":
             archivos = [f for f in os.listdir('.') if f.startswith('reporte_angel_') and f.endswith('.html')]
             if archivos:
                 ultimo = sorted(archivos)[-1]
-                print(f"[+] Abriendo: {ultimo}")
-                os.startfile(ultimo)
+                print(f"[+] Abriendo último reporte forense: {ultimo}")
+                if sys.platform.startswith('win'):
+                    os.startfile(ultimo)
+                else:
+                    print(f"[*] Sistema operativo no compatible con apertura automática. Archivo: {ultimo}")
             else:
-                print("[-] No hay reportes")
+                print("[-] No se encontraron reportes en el directorio actual.")
             sys.exit(0)
     
+    # Ejecución única por defecto si se corre sin banderas desde la terminal
     guardian = AngelGuardianReal()
     if guardian.api:
         guardian.escanear()
