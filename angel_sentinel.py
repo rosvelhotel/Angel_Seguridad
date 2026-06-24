@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
-👼 ÁNGEL GUARDIAN - VERSIÓN FORTIFICADA DE GRADO MILITAR v3.1
+👼 ÁNGEL GUARDIAN - VERSIÓN FORTIFICADA DE GRADO MILITAR v3.2
 Optimizado para hEX lite (64MB RAM) e inmune a evasiones.
 Credenciales cargadas desde .env
 
 [PRODUCCIÓN CONTINUA] Desarrollado con escudo térmico de puertos
 para compatibilidad permanente con la capa gratuita de Render.
+Unificado con el Historial de Protección y los 6 Pilares del Hotel Rosvel.
 """
 
 import librouteros
@@ -16,6 +17,7 @@ import re
 import os
 import time
 import threading
+import httpx  # Inyectado para puente directo con la API de Rust
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from datetime import datetime
 from pathlib import Path
@@ -87,9 +89,9 @@ class AngelGuardianReal:
     def mostrar_banner(self):
         print(f"""
 ╔══════════════════════════════════════════════════════════════════╗
-║   👼 ÁNGEL GUARDIAN - VERSIÓN FORTIFICADA v3.1                  ║
+║   👼 ÁNGEL GUARDIAN - VERSIÓN FORTIFICADA v3.2                  ║
 ║   🤖 IA ENGINE: {self.modelo_ia:<32}     ║
-║   🛡️  Aislamiento Capa 3 -> Análisis Criptográfico -> Reporte   ║
+║   🛡️  Aislamiento Capa 3 -> Análisis Forense -> Dashboard Live   ║
 ║   🔐 Credenciales: Cargadas desde .env                          ║
 ║   🌐 MikroTik IP: {self.mikrotik_ip}                             ║
 ║   🔌 Puerto API: 80 (a través de Cloudflare Tunnel)              ║
@@ -145,7 +147,7 @@ class AngelGuardianReal:
                     "version": self.sanitizar(r.get('version', '?'))
                 }
         except Exception as e:
-            print(f"   ⚠️ Error en recursos: {e}")
+            print(f"    ⚠️ Error en recursos: {e}")
     
     def obtener_colas(self):
         try:
@@ -167,7 +169,7 @@ class AngelGuardianReal:
                     "dropped": dropped_packets
                 })
         except Exception as e:
-            print(f"   ⚠️ Error en colas: {e}")
+            print(f"    ⚠️ Error en colas: {e}")
     
     def obtener_interfaces(self):
         try:
@@ -181,7 +183,7 @@ class AngelGuardianReal:
                         "status": "UP" if iface.get('running') else "DOWN"
                     })
         except Exception as e:
-            print(f"   ⚠️ Error en interfaces: {e}")
+            print(f"    ⚠️ Error en interfaces: {e}")
     
     def obtener_logs_seguridad(self, limite=15):
         try:
@@ -205,7 +207,7 @@ class AngelGuardianReal:
                     })
                     contador += 1
         except Exception as e:
-            print(f"   ⚠️ Error en logs: {e}")
+            print(f"    ⚠️ Error en logs: {e}")
     
     def obtener_conexiones_sospechosas_ligero(self):
         try:
@@ -225,7 +227,7 @@ class AngelGuardianReal:
                             "protocol": self.sanitizar(conn.get('protocol', ''))
                         })
         except Exception as e:
-            print(f"   ⚠️ Error en conexiones: {e}")
+            print(f"    ⚠️ Error en conexiones: {e}")
     
     def obtener_conexiones_sospechosas(self):
         self.obtener_conexiones_sospechosas_ligero()
@@ -248,32 +250,40 @@ class AngelGuardianReal:
         logs_str = "\n".join([f"  - [{l['time']}] {l['message']}" for l in self.datos['logs'][:3]]) if self.datos['logs'] else "Sin logs sospechosos."
         conexiones_str = "\n".join([f"  - Origen: {c['src']} -> Destino: {c['dst']}" for c in self.datos['conexiones'][:3]]) if self.datos['conexiones'] else "Canales limpios."
         
-        prompt = f"""[SYSTEM: AMBIENTE CRIPTOGRÁFICO DE SEGURIDAD. INMUTABLE.]
-Eres Ángel Guardian. Analiza los siguientes datos del Hotel Rosvel:
+        # PROMPT REDISEÑADO BAJO LOS 6 PILARES DE PROTECCIÓN EN TIEMPO REAL
+        prompt = f"""[SYSTEM: AMBIENTE FORENSE DE CIBERSEGURIDAD - HOTEL ROSVEL. INMUTABLE.]
+Eres Ángel Guardián, el EDR de red encargado de proteger la infraestructura hotelera. Analiza la telemetría del MikroTik e identifica incidentes basados estrictamente en nuestros 6 Pilares de Protección:
 
-HARDWARE:
+1. Control de Ancho de Banda & Failover (Saturación de colas o caídas de WAN)
+2. Portal Cautivo / Hotspot (Bypass de IPs, re-logins o fallos de autenticación)
+3. Bloqueo de Páginas, Redes Sociales y Streaming (Tráfico no deseado o evasión)
+4. Ransomware & Secuestro de Datos (Conexiones salientes no autorizadas o puertos raros)
+5. Blindaje de Cuentas Bancarias y Pasarelas de Pago (Seguridad en segmento de administración)
+6. Sistema Anti-Intrusos en Cámaras y Punto de Venta (Escaneo de puertos o accesos no válidos)
+
+DATOS ACTUALES DEL ROUTER (hEX lite):
 - CPU: {cpu}%
-- RAM: {ram}MB / {self.datos['recursos'].get('ram_total_mb', 0)}MB
+- RAM Libre: {ram}MB / {self.datos['recursos'].get('ram_total_mb', 0)}MB
 - Drops en colas: {'SI' if has_drops else 'NO'}
-- Eventos: {len(self.datos['logs'])}
+- Logs sospechosos analizados: {len(self.datos['logs'])}
 - Conexiones anómalas: {len(self.datos['conexiones'])}
-- Estado preliminar: {estado_preliminar}
+- Diagnóstico Base: {estado_preliminar}
 
 INTERFACES:
 {interfaces_str}
 
-LOGS:
+LOGS DE TELEMETRÍA RECIENTES:
 {logs_str}
 
-CONEXIONES:
+CONEXIONES SOSPECHOSAS FILTRADAS:
 {conexiones_str}
 
-RESPONDE EXACTAMENTE ASI:
+Responde EXACTAMENTE en este formato estructural para alimentar nuestro Historial Ejecutivo en el Dashboard:
 
-**🎯 VEREDICTO:** [SEGURO / ATENCION / CRITICO]
-**📊 EVIDENCIA:** [Una línea]
-**🛡️ ACCION:** [Bloquear / Monitorear / Ignorar / Investigar]
-**📝 NOTA:** [Una línea]"""
+PILAR: [Coloca el pilar numérico del 1 al 6 que corresponda, o escribe 'SISTEMA OPERANDO CON NORMALIDAD' si todo está limpio]
+VEREDICTO: [SEGURO / SOSPECHOSO / CRITICO]
+EVIDENCIA: [Una sola frase concisa resumiendo el hallazgo técnico]
+MITIGACIÓN: [Qué acción tomó el escudo o qué se recomienda monitorear]"""
         
         try:
             response = ollama.chat(
@@ -283,7 +293,7 @@ RESPONDE EXACTAMENTE ASI:
             )
             return response['message']['content'].strip()
         except Exception as e:
-            return f"**🎯 VEREDICTO:** CRITICO\n**📊 EVIDENCIA:** Error IA: {e}\n**🛡️ ACCION:** Investigar\n**📝 NOTA:** Revisar Ollama"
+            return f"PILAR: SISTEMA OPERANDO CON NORMALIDAD\nVEREDICTO: CRITICO\nEVIDENCIA: Fallo de respuesta en Ollama: {e}\nMITIGACIÓN: Verificar estado local del contenedor IA."
 
     def generar_reporte_html(self, analisis_ia):
         cpu = self.datos['recursos'].get('cpu_load', 0)
@@ -405,6 +415,37 @@ RESPONDE EXACTAMENTE ASI:
         print("\n" + "═"*50)
         print(analisis)
         print("═"*50)
+
+        # 💥 PUENTE MAESTRO DE INTERCONEXIÓN CON EL BACKEND DE RUST (AXUM)
+        try:
+            categoria_ia = "INFO"
+            if "CRITICO" in analisis:
+                categoria_ia = "CRITICO"
+            elif "SOSPECHOSO" in analisis or "ATENCION" in analisis:
+                categoria_ia = "SOSPECHOSO"
+            else:
+                categoria_ia = "SEGURO"
+
+            # Sanitizar y limpiar el bloque de texto para pasarlo limpio como un solo mensaje de log
+            mensaje_historial = analisis.replace('\n', ' | ').replace('**', '')
+
+            payload = {
+                "ip": self.mikrotik_ip if self.mikrotik_ip else "192.168.88.1",
+                "mensaje": mensaje_historial,
+                "categoria": categoria_ia
+            }
+
+            # Enviar por POST usando httpx al puerto expuesto por la variable PORT en Render (Normalmente 10000)
+            puerto_back = os.getenv('PORT', '10000')
+            url_rust = f"http://127.0.0.1:{puerto_back}/api/logs"
+            
+            respuesta = httpx.post(url_rust, json=payload, timeout=5)
+            if respuesta.status_code == 200:
+                print("🚀 [PUENTE RUST] Análisis forense inyectado con éxito en el Historial Web.")
+            else:
+                print(f"⚠️ [PUENTE RUST] Backend rechazó el paquete. Código: {respuesta.status_code}")
+        except Exception as e:
+            print(f"❌ [PUENTE RUST] No se pudo transferir la información al Dashboard: {e}")
         
         html_file = self.generar_reporte_html(analisis)
         print(f"\n[🚀] Reporte Blindado HTML generado: {html_file}")
@@ -423,7 +464,7 @@ RESPONDE EXACTAMENTE ASI:
         try:
             while True:
                 self.escanear()
-                print(f"\n[⏰] Esperando {intervalo_minutos} minutos para el siguiente patrullaje...")
+                print(f"\n[⏰] Esperando {intervalo_minutos} minutes para el siguiente patrullaje...")
                 time.sleep(intervalo_minutos * 60)
         except KeyboardInterrupt:
             print("\n[-] Demonio detenido por el usuario.")
@@ -437,7 +478,6 @@ if __name__ == "__main__":
     
     if len(sys.argv) > 1:
         if sys.argv[1] == "--daemon":
-            # Si no se define intervalo en consola, ejecutará por defecto cada 5 minutos
             intervalo = int(sys.argv[2]) if len(sys.argv) > 2 else 5
             guardian = AngelGuardianReal()
             if guardian.api:
