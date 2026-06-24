@@ -1,6 +1,8 @@
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use chrono::Local;
+use std::time::Duration;
+use std::process::Command;
 use axum::{
     Router,
     routing::get,
@@ -119,11 +121,51 @@ async fn main() {
     println!("
 ============================================================
    ANGEL GUARDIAN - MOTOR ONION EN RUST
-   Servidor web + Dashboard
+   Servidor web + Dashboard [PRODUCCIÓN CONTINUA]
 ============================================================
 ");
 
     let motor = Arc::new(Mutex::new(MotorOnion::new()));
+
+    // 🟢 CLON DE SEGURIDAD PARA EL LOOP DE AUDITORÍA CONTINUA
+    let motor_loop = motor.clone();
+
+    // 🔥 AUTOMATIZACIÓN EN SEGUNDO PLANO (Cada 5 minutos)
+    // Este hilo despierta al Ángel Guardián de Python de forma asíncrona sin congelar la web.
+    tokio::spawn(async move {
+        loop {
+            println!("🕵️‍♂️ [RUST PATRULLA] Despertando proceso forense de Ángel Guardián en Python...");
+            
+            // Ejecuta el script de Python, hace el análisis único del MikroTik/Ollama y se apaga de inmediato.
+            // Nota: Se asume que el script de Python envía los logs mediante un POST a /api/logs localmente.
+            let resultado = Command::new("python3")
+                .arg("angel_sentinel.py") 
+                .output();
+
+            match resultado {
+                Ok(output) => {
+                    if output.status.success() {
+                        println!("✅ [RUST PATRULLA] Auditoría de Python completada de forma exitosa.");
+                    } else {
+                        let error_msg = String::from_utf8_lossy(&output.stderr);
+                        println!("⚠️ [RUST PATRULLA] Python ejecutó con errores:\n{}", error_msg);
+                    }
+                }
+                Err(e) => {
+                    println!("❌ [RUST PATRULLA] No se pudo lanzar el script de Python: {}", e);
+                }
+            }
+
+            // Registro de control interno en el MotorOnion para verificar estabilidad en el panel
+            {
+                let mut m = motor_loop.lock().await;
+                m.agregar_log("127.0.0.1", "Patrullaje cíclico automatizado completado desde Rust.", "INFO");
+            }
+
+            println!("[⏰] Ciclo completado. Durmiendo por 5 minutos...");
+            tokio::time::sleep(Duration::from_secs(300)).await;
+        }
+    });
 
     let app = Router::new()
         .route("/", get(handler_index))
@@ -132,8 +174,8 @@ async fn main() {
         .route("/api/stats", get(handler_stats))
         .with_state(motor.clone());
 
-    // 🟢 CAMBIO AQUÍ - Usar puerto de Render
-    let port = std::env::var("PORT").unwrap_or_else(|_| "8080".to_string());
+    // Configuración dinámica del puerto para acoplarse con Render
+    let port = std::env::var("PORT").unwrap_or_else(|_| "10000".to_string());
     let addr = format!("0.0.0.0:{}", port);
     println!("Servidor en: http://{}", addr);
     println!("Dashboard: http://{}/", addr);
