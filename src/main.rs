@@ -126,8 +126,6 @@ async fn main() {
 ");
 
     let motor = Arc::new(Mutex::new(MotorOnion::new()));
-
-    // 🟢 CLON DE SEGURIDAD PARA EL LOOP DE AUDITORÍA CONTINUA
     let motor_loop = motor.clone();
 
     // 🔥 AUTOMATIZACIÓN EN SEGUNDO PLANO (Cada 5 minutos)
@@ -135,12 +133,19 @@ async fn main() {
         loop {
             println!("🕵️‍♂️ [RUST PATRULLA] Despertando proceso forense de Ángel Guardián en Python...");
             
-            // 🎯 INTENTO 1: Usar la ruta absoluta del entorno virtual nativo de Render
-            let mut resultado = Command::new("/opt/render/project/.venv/bin/python")
+            // 🎯 INTENTO 1: Buscar el python ejecutable en el entorno virtual relativo local (.venv)
+            let mut resultado = Command::new("./.venv/bin/python")
                 .arg("angel_sentinel.py")
                 .output();
 
-            // 🔄 DESVÍO DE SEGURIDAD: Si falla el entorno virtual directo, forzamos la llamada asegurando el PATH
+            // 🔄 DESVÍO DE SEGURIDAD 1: Si falla el relativo, buscar en la ruta absoluta estándar de Render
+            if resultado.is_err() || !resultado.as_ref().unwrap().status.success() {
+                resultado = Command::new("/opt/render/project/src/.venv/bin/python")
+                    .arg("angel_sentinel.py")
+                    .output();
+            }
+
+            // 🔄 DESVÍO DE SEGURIDAD 2: Como último recurso, intentar con el comando global del sistema
             if resultado.is_err() || !resultado.as_ref().unwrap().status.success() {
                 println!("⚠️ [RUST PATRULLA] Reintentando ejecutor mediante desvío directo de binario global...");
                 resultado = Command::new("python3")
@@ -156,10 +161,12 @@ async fn main() {
                         let error_msg = String::from_utf8_lossy(&output.stderr);
                         println!("⚠️ [RUST PATRULLA] Python ejecutó con advertencia/error de contexto:\n{}", error_msg);
                         
-                        // 🛠️ AUTO-REPARACIÓN DINÁMICA: Si el contenedor de Render purga el pip en runtime, lo reinstala localmente
+                        // 🛠️ AUTO-REPARACIÓN INTELIGENTE: Instalar directo en el entorno virtual local si falta un módulo
                         if error_msg.contains("ModuleNotFoundError") {
-                            println!("⚙️ [RUST REPARACIÓN] Forzando inyección express de paquetes en entorno local...");
-                            let _ = Command::new("python3").args(&["-m", "pip", "install", "librouteros", "ollama", "python-dotenv"]).output();
+                            println!("⚙️ [RUST REPARACIÓN] Forzando inyección express de paquetes en entorno virtual local...");
+                            let _ = Command::new("./.venv/bin/pip")
+                                .args(&["install", "librouteros", "ollama", "python-dotenv", "httpx"])
+                                .output();
                         }
                     }
                 }
