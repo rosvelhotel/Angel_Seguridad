@@ -131,16 +131,22 @@ async fn main() {
     let motor_loop = motor.clone();
 
     // 🔥 AUTOMATIZACIÓN EN SEGUNDO PLANO (Cada 5 minutos)
-    // Este hilo despierta al Ángel Guardián de Python de forma asíncrona sin congelar la web.
     tokio::spawn(async move {
         loop {
             println!("🕵️‍♂️ [RUST PATRULLA] Despertando proceso forense de Ángel Guardián en Python...");
             
-            // Ejecuta el script de Python, hace el análisis único del MikroTik/Ollama y se apaga de inmediato.
-            // Nota: Se asume que el script de Python envía los logs mediante un POST a /api/logs localmente.
-            let resultado = Command::new("python3")
-                .arg("angel_sentinel.py") 
+            // 🎯 INTENTO 1: Usar la ruta absoluta del entorno virtual nativo de Render
+            let mut resultado = Command::new("/opt/render/project/.venv/bin/python")
+                .arg("angel_sentinel.py")
                 .output();
+
+            // 🔄 DESVÍO DE SEGURIDAD: Si falla el entorno virtual directo, forzamos la llamada asegurando el PATH
+            if resultado.is_err() || !resultado.as_ref().unwrap().status.success() {
+                println!("⚠️ [RUST PATRULLA] Reintentando ejecutor mediante desvío directo de binario global...");
+                resultado = Command::new("python3")
+                    .arg("angel_sentinel.py")
+                    .output();
+            }
 
             match resultado {
                 Ok(output) => {
@@ -148,11 +154,17 @@ async fn main() {
                         println!("✅ [RUST PATRULLA] Auditoría de Python completada de forma exitosa.");
                     } else {
                         let error_msg = String::from_utf8_lossy(&output.stderr);
-                        println!("⚠️ [RUST PATRULLA] Python ejecutó con errores:\n{}", error_msg);
+                        println!("⚠️ [RUST PATRULLA] Python ejecutó con advertencia/error de contexto:\n{}", error_msg);
+                        
+                        // 🛠️ AUTO-REPARACIÓN DINÁMICA: Si el contenedor de Render purga el pip en runtime, lo reinstala localmente
+                        if error_msg.contains("ModuleNotFoundError") {
+                            println!("⚙️ [RUST REPARACIÓN] Forzando inyección express de paquetes en entorno local...");
+                            let _ = Command::new("python3").args(&["-m", "pip", "install", "librouteros", "ollama", "python-dotenv"]).output();
+                        }
                     }
                 }
                 Err(e) => {
-                    println!("❌ [RUST PATRULLA] No se pudo lanzar el script de Python: {}", e);
+                    println!("❌ [RUST PATRULLA] Error crítico de llamada en subsistema operativo: {}", e);
                 }
             }
 
