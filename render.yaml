@@ -1,13 +1,14 @@
 services:
-  # Servicio 1: Agente Ángel Guardian (Python)
-  - type: worker
-    name: angel-guardian-agent
-    env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: python angel_centinela.py --daemon 30
+  - type: web
+    name: angel-guardian-dashboard
+    env: rust
+    # 🟢 El secreto: Instalamos las dependencias de Python ANTES de compilar Rust
+    buildCommand: "pip install librouteros ollama python-dotenv && cargo build --release"
+    startCommand: "./target/release/angel_server"
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.0
+      - key: RUST_LOG
+        value: info
+      # 🛡️ Pasamos tus credenciales del MikroTik al entorno unificado
       - key: MIKROTIK_IP
         sync: false
       - key: MIKROTIK_USER
@@ -16,13 +17,3 @@ services:
         sync: false
       - key: MODELO_IA
         value: angel_guardian_mistral
-
-  # Servicio 2: Dashboard (Rust)
-  - type: web
-    name: angel-guardian-dashboard
-    env: rust
-    buildCommand: cargo build --release
-    startCommand: ./target/release/angel_server
-    envVars:
-      - key: RUST_LOG
-        value: info
